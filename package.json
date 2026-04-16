@@ -9,6 +9,9 @@
       "build": "node build.js",
       "start": "npx serve ."
     },
+    "files": [
+        "dist"
+      ],
     "keywords": [
       "cross domain localstorage",
       "share localstorage across domains",
