@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Cross Storage Hub</title>
+</head>
+<body>
+<script>
+(function () {
+
+  // =============================
+  // ⚙️ CONFIGURATION
+  // =============================
+
+  const CONFIG = {
+    mode: "restricted", 
+    // modes:
+    // "subdomain"  → same root domain only
+    // "restricted" → whitelist domains
+    // "open"       → any domain (requires token)
+
+    allowedOrigins: [
+      "https://app.example.com",
+      "https://admin.example.com"
+    ],
+
+    allowedRootDomain: "example.com",
+
+    token: "CHANGE_ME_SECRET_KEY",
+
+    enableNamespace: true
+  };
+
+
+  // =============================
+  // 🔐 SECURITY CHECKS
+  // =============================
+
+  function isSubdomain(origin) {
+    try {
+      const url = new URL(origin);
+      return url.hostname.endsWith(CONFIG.allowedRootDomain);
+    } catch {
+      return false;
+    }
+  }
+
+  function isAllowedOrigin(origin, token) {
+    if (CONFIG.mode === "open") {
+      return token === CONFIG.token;
+    }
+
+    if (CONFIG.mode === "restricted") {
+      return CONFIG.allowedOrigins.includes(origin);
+    }
+
+    if (CONFIG.mode === "subdomain") {
+      return isSubdomain(origin);
+    }
+
+    return false;
+  }
+
+
+  // =============================
+  // 🧠 STORAGE HELPERS
+  // =============================
+
+  function buildKey(namespace, key) {
+    if (!CONFIG.enableNamespace || !namespace) return key;
+    return namespace + ":" + key;
+  }
+
+  function safeSet(key, value) {
+    localStorage.setItem(key, value);
+  }
+
+  function safeGet(key) {
+    return localStorage.getItem(key);
+  }
+
+  function safeRemove(key) {
+    localStorage.removeItem(key);
+  }
+
+  function safeClear(namespace) {
+    if (!CONFIG.enableNamespace || !namespace) {
+      localStorage.clear();
+      return;
+    }
+
+    Object.keys(localStorage).forEach(k => {
+      if (k.startsWith(namespace + ":")) {
+        localStorage.removeItem(k);
+      }
+    });
+  }
+
+
+  // =============================
+  // 📡 MESSAGE HANDLER
+  // =============================
+
+  window.addEventListener("message", function (event) {
+
+    const data = event.data || {};
+    const { id, action, key, value, token, namespace } = data;
+
+    if (!id || !action) return;
+
+    // 🔐 Validate origin/token
+    if (!isAllowedOrigin(event.origin, token)) {
+      return;
+    }
+
+    let result = null;
+    const finalKey = buildKey(namespace, key);
+
+    try {
+      if (action === "get") {
+        result = safeGet(finalKey);
+      }
+
+      if (action === "set") {
+        safeSet(finalKey, value);
+        result = true;
+      }
+
+      if (action === "remove") {
+        safeRemove(finalKey);
+        result = true;
+      }
+
+      if (action === "clear") {
+        safeClear(namespace);
+        result = true;
+      }
+
+    } catch (e) {
+      result = JSON.stringify({ error: e.message });
+    }
+
+    // 📤 Respond back
+    event.source.postMessage(
+      { id, result },
+      event.origin
+    );
+
+  });
+
+})();
+</script>
+</body>
+</html>

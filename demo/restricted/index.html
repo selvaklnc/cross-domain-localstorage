@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Restricted Domain Storage Demo</title>
+</head>
+<body>
+
+<h2>🛡️ Restricted Domain Storage Demo</h2>
+
+<input type="text" id="input" placeholder="Enter value" />
+<button onclick="save()">Save</button>
+<button onclick="load()">Load</button>
+<button onclick="removeItem()">Remove</button>
+
+<p id="output"></p>
+
+<script src="../../dist/cross-storage.js"></script>
+
+<script>
+  const storage = new CrossStorage({
+    iframeUrl: "https://storage.yourdomain.com/storage.html"
+  });
+
+  async function save() {
+    try {
+      const value = document.getElementById("input").value;
+
+      await storage.set("restricted_key", value);
+
+      document.getElementById("output").innerText = "Saved: " + value;
+    } catch (e) {
+      document.getElementById("output").innerText = "Error: " + e;
+    }
+  }
+
+  async function load() {
+    try {
+      const value = await storage.get("restricted_key");
+
+      document.getElementById("output").innerText = "Loaded: " + value;
+    } catch (e) {
+      document.getElementById("output").innerText = "Error: " + e;
+    }
+  }
+
+  async function removeItem() {
+    try {
+      await storage.remove("restricted_key");
+
+      document.getElementById("output").innerText = "Removed";
+    } catch (e) {
+      document.getElementById("output").innerText = "Error: " + e;
+    }
+  }
+</script>
+
+</body>
+</html>

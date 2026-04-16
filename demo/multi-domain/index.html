@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Multi-Domain Storage Demo</title>
+</head>
+<body>
+
+<h2>🌍 Multi-Domain Storage Demo</h2>
+
+<input type="text" id="input" placeholder="Enter value" />
+<button onclick="save()">Save</button>
+<button onclick="load()">Load</button>
+<button onclick="removeItem()">Remove</button>
+
+<p id="output"></p>
+
+<script src="../../dist/cross-storage.js"></script>
+
+<script>
+  const storage = new CrossStorage({
+    iframeUrl: "https://storage.yourdomain.com/storage.html",
+    token: "demo-secret-key"
+  });
+
+  async function save() {
+    const value = document.getElementById("input").value;
+
+    await storage.set("global_key", value);
+
+    document.getElementById("output").innerText = "Saved: " + value;
+  }
+
+  async function load() {
+    const value = await storage.get("global_key");
+
+    document.getElementById("output").innerText = "Loaded: " + value;
+  }
+
+  async function removeItem() {
+    await storage.remove("global_key");
+
+    document.getElementById("output").innerText = "Removed";
+  }
+</script>
+
+</body>
+</html>
